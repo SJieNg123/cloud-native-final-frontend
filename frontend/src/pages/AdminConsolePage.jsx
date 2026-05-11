@@ -262,6 +262,18 @@ const AdminConsolePage = () => {
   const selectedCreateCover = Form.useWatch('cover_image_url', createForm);
   const createRegistrationMode = Form.useWatch('registration_mode', createForm) || 'LIMITED';
   const watchedSessions = Form.useWatch('sessions', createForm) || [];
+  const latestSessionEndLabel = useMemo(() => {
+    const ends = (watchedSessions || []).map((s) => s?.ends_at).filter(Boolean);
+    const max = ends.reduce((m, cur) => {
+      if (!m) return cur;
+      const a = dayjs(m);
+      const b = dayjs(cur);
+      if (!a.isValid()) return cur;
+      if (!b.isValid()) return m;
+      return b.isAfter(a) ? cur : m;
+    }, null);
+    return max ? dayjs(max).format('YYYY-MM-DD HH:mm') : '未設定';
+  }, [watchedSessions]);
   const anyRequireChildTicket = useMemo(
     () => (watchedSessions || []).some((s) => Boolean(s?.require_child_ticket)),
     [watchedSessions]
@@ -1322,21 +1334,11 @@ const AdminConsolePage = () => {
                           >
                             新增場次
                           </Button>
-                          <Tag color="blue">
-                            活動結束時間（取所有場次最晚結束）：
-                            {(() => {
-                              const ends = (watchedSessions || []).map((s) => s?.ends_at).filter(Boolean);
-                              const max = ends.reduce((m, cur) => {
-                                if (!m) return cur;
-                                const a = dayjs(m);
-                                const b = dayjs(cur);
-                                if (!a.isValid()) return cur;
-                                if (!b.isValid()) return m;
-                                return b.isAfter(a) ? cur : m;
-                              }, null);
-                              return max ? dayjs(max).format('YYYY-MM-DD HH:mm') : '未設定';
-                            })()}
-                          </Tag>
+                          <div className="admin-session-summary" aria-live="polite">
+                            <span className="admin-session-summary-label">活動結束</span>
+                            <span className="admin-session-summary-note">取所有場次最晚結束</span>
+                            <strong>{latestSessionEndLabel}</strong>
+                          </div>
                         </Space>
                       </Space>
                     )}

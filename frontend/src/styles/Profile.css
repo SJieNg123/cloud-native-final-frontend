@@ -1,24 +1,24 @@
 .profile-container {
-  padding-top: 8px;
+  padding-top: var(--ds-space-xs);
 }
 
 .profile-header-card {
-  border-radius: 16px;
-  border: 1px solid #dce8f7;
-  box-shadow: 0 14px 24px rgba(18, 38, 58, 0.08);
-  background: linear-gradient(180deg, #fff, #eef5ff);
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow);
 }
 
 .avatar {
   width: 96px;
   height: 96px;
   margin: 0 auto;
-  border-radius: 50%;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #f2f7ff, #e8f1ff);
-  border: 2px solid #d5e7ff;
   overflow: hidden;
+  border: 2px solid var(--ds-line);
+  border-radius: 50%;
+  background: var(--ds-surface-muted);
 }
 
 .avatar img {
@@ -32,14 +32,15 @@
 }
 
 .tabs-content .ant-card {
-  border-radius: 14px;
-  border: 1px solid #e5edf5;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-lg);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .tabs-content .ant-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 18px rgba(18, 38, 58, 0.1);
+  border-color: var(--ds-red);
+  box-shadow: var(--ds-shadow-soft);
 }
 
 .tabs-content .ant-list-item-meta-title {
@@ -83,24 +84,9 @@
 }
 
 @media (min-width: 1025px) {
-  .profile-header-card {
-    border-radius: 20px;
-    box-shadow: 0 18px 34px rgba(15, 37, 62, 0.1);
-  }
-
   .avatar {
     width: 104px;
     height: 104px;
-  }
-
-  .tabs-content .ant-card {
-    border-radius: 16px;
-    border-color: rgba(197, 216, 238, 0.8);
-  }
-
-  .tabs-content .ant-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 14px 24px rgba(18, 38, 58, 0.12);
   }
 
   .tabs-content .ant-list-item {
@@ -111,10 +97,6 @@
 @media (max-width: 1024px) {
   .profile-header-card .ant-descriptions-item-label {
     width: 110px;
-  }
-
-  .tabs-content .ant-card {
-    border-radius: 12px;
   }
 
   .tabs-content .ant-list-item {
@@ -134,7 +116,6 @@
   .profile-header-card .ant-btn {
     width: 100%;
     min-height: 42px;
-    font-weight: 700;
   }
 
   .tabs-content .ant-list-item {
@@ -162,31 +143,5 @@
   to {
     opacity: 1;
     transform: scale(1);
-  }
-}
-
-:root.theme-dark .profile-header-card {
-  background: linear-gradient(180deg, #17171c, #131318);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.28);
-}
-
-:root.theme-dark .avatar {
-  background: linear-gradient(135deg, #23232b, #1a1a22);
-  border: 2px solid rgba(255, 255, 255, 0.16);
-}
-
-:root.theme-dark .tabs-content .ant-card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #1a1a21;
-}
-
-@media (min-width: 1025px) {
-  :root.theme-dark .profile-header-card {
-    box-shadow: 0 20px 36px rgba(0, 0, 0, 0.36);
-  }
-
-  :root.theme-dark .tabs-content .ant-card:hover {
-    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.4);
   }
 }

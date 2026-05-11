@@ -474,7 +474,7 @@ const EventDetail = () => {
           </Col>
           <Col xs={24} md={14}>
             <Space className="event-detail-title-row" align="start" wrap>
-              <Title level={2}>🎉 {event.title}</Title>
+              <Title level={2}>{event.title}</Title>
               <Tag className="event-detail-status" color={primaryStatus.color}>
                 {primaryStatus.label}
               </Tag>

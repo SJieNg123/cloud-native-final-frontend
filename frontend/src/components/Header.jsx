@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Avatar, Badge, Button, Drawer, Dropdown, Layout, Space, Tag, Tooltip } from 'antd';
-import { BellOutlined, FontSizeOutlined, LogoutOutlined, MenuOutlined, MoonOutlined, SunOutlined, UserOutlined } from '@ant-design/icons';
+import { BellOutlined, FontSizeOutlined, IdcardOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useUiPreferences } from '../context/UiPreferencesContext';
 import { LOGO_IMAGE } from '../assets/media';
 import LoginModal from './LoginModal';
+import AnimatedThemeToggler from './AnimatedThemeToggler';
 import { ROLE_LABELS, labelOr } from '../utils/labels';
 import '../styles/Header.css';
 
@@ -17,7 +18,7 @@ const AppHeader = () => {
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
   const { unreadCount, connected } = useNotifications();
-  const { colorMode, setColorMode, textScale, setTextScale } = useUiPreferences();
+  const { colorMode, textScale, setTextScale } = useUiPreferences();
   const cycleTextScale = () => {
     if (textScale === 'normal') {
       setTextScale('large');
@@ -115,13 +116,7 @@ const AppHeader = () => {
       <div className="header-right">
         <Space size="middle" wrap>
           <Tooltip title={colorMode === 'dark' ? '切換為明亮模式' : '切換為暗黑模式'}>
-            <Button
-              className="ghost-btn"
-              icon={colorMode === 'dark' ? <SunOutlined /> : <MoonOutlined />}
-              onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
-            >
-              {colorMode === 'dark' ? '明亮' : '暗黑'}
-            </Button>
+            <AnimatedThemeToggler className="theme-toggle-btn" variant="circle" duration={520} />
           </Tooltip>
 
           <Tooltip title={textScale === 'normal' ? '切換為大字版' : textScale === 'large' ? '切換為超大字版' : '切換為標準字體'}>
@@ -160,11 +155,14 @@ const AppHeader = () => {
 
       <div className="mobile-header-user">
         {user ? (
-          <Dropdown menu={{ items: userMenuItems }} trigger={['click']}>
-            <Button type="text" className="user-button">
-              <Avatar size={28} icon={<UserOutlined />} />
-            </Button>
-          </Dropdown>
+          <Button
+            type="text"
+            className="user-button mobile-header-profile-trigger"
+            aria-label="開啟帳號功能"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <Avatar size={28} icon={<UserOutlined />} />
+          </Button>
         ) : (
           <Button type="primary" size="small" onClick={() => setLoginOpen(true)}>登入</Button>
         )}
@@ -178,92 +176,82 @@ const AppHeader = () => {
         width={300}
         className="mobile-action-drawer"
       >
-        <div className="mobile-drawer-group">
-          <div className="mobile-drawer-group-title">個人與通知</div>
-          {user ? (
-            <Dropdown menu={{ items: userMenuItems }} trigger={['click']}>
-              <Button block type="text" className="mobile-drawer-item">
-                <span className="mobile-drawer-item-main">
-                  <UserOutlined className="mobile-drawer-item-icon" />
-                  {canAccessTicketBox ? '帳號與票匣' : '帳號設定'}
-                </span>
-                <span className="mobile-drawer-item-meta">{labelOr(ROLE_LABELS, user.role)}</span>
-              </Button>
-            </Dropdown>
-          ) : (
-            <Button block type="text" className="mobile-drawer-item" onClick={() => setLoginOpen(true)}>
-              <span className="mobile-drawer-item-main">
-                <UserOutlined className="mobile-drawer-item-icon" />
+        <div className="mobile-drawer-shell">
+          <div className="mobile-drawer-main">
+            <div className="mobile-drawer-group">
+              <div className="mobile-drawer-group-title">顯示與探索</div>
+              <Tooltip title={colorMode === 'dark' ? '切換為明亮模式' : '切換為暗黑模式'}>
+                <AnimatedThemeToggler
+                  className="mobile-drawer-item theme-toggle-mobile"
+                  label={colorMode === 'dark' ? '切換為明亮模式' : '切換為暗黑模式'}
+                  variant="circle"
+                  duration={520}
+                />
+              </Tooltip>
+              <Tooltip title={textScale === 'normal' ? '切換為大字版' : textScale === 'large' ? '切換為超大字版' : '切換為標準字體'}>
+                <Button
+                  block
+                  type="text"
+                  className="mobile-drawer-item"
+                  onClick={cycleTextScale}
+                >
+                  <span className="mobile-drawer-item-main">
+                    <FontSizeOutlined className="mobile-drawer-item-icon" />
+                    字體大小：{textScale === 'normal' ? '標準字' : textScale === 'large' ? '大字版' : '超大字'}
+                  </span>
+                </Button>
+              </Tooltip>
+            </div>
+          </div>
+
+          <div className="mobile-drawer-account">
+            {user ? (
+              <>
+                <div className="mobile-drawer-account-row">
+                  <div className="mobile-drawer-user-card">
+                    <Avatar size={38} icon={<UserOutlined />} />
+                    <span className="mobile-drawer-user-copy">
+                      <strong>{user.name}</strong>
+                      <span>{labelOr(ROLE_LABELS, user.role)}</span>
+                    </span>
+                  </div>
+                  <Button
+                    type="text"
+                    danger
+                    className="mobile-drawer-logout"
+                    onClick={async () => {
+                      await logout();
+                      navigate('/');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogoutOutlined />
+                    登出
+                  </Button>
+                </div>
+                <div className="mobile-drawer-account-actions">
+                  {canAccessTicketBox ? (
+                    <Link to="/me" className="mobile-drawer-account-link">
+                      <IdcardOutlined />
+                      <span>我的票匣</span>
+                    </Link>
+                  ) : null}
+                  {canAccessNotifications ? (
+                    <Link to="/notifications" className="mobile-drawer-account-link">
+                      <BellOutlined />
+                      <span>通知中心</span>
+                      <Badge count={unreadCount} size="small" />
+                    </Link>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <Button type="primary" className="mobile-drawer-login" onClick={() => setLoginOpen(true)}>
                 登入
-              </span>
-            </Button>
-          )}
-          {canAccessNotifications ? (
-            <Link to="/notifications">
-              <Button block type="text" className="mobile-drawer-item">
-                <span className="mobile-drawer-item-main">
-                  <BellOutlined className="mobile-drawer-item-icon" />
-                  通知中心
-                </span>
-                <Badge count={unreadCount} size="small" />
               </Button>
-            </Link>
-          ) : null}
+            )}
+          </div>
         </div>
-
-        <div className="mobile-drawer-divider" />
-
-        <div className="mobile-drawer-group">
-          <div className="mobile-drawer-group-title">顯示與探索</div>
-          <Tooltip title={colorMode === 'dark' ? '切換為明亮模式' : '切換為暗黑模式'}>
-            <Button
-              block
-              type="text"
-              className="mobile-drawer-item"
-              onClick={() => setColorMode(colorMode === 'dark' ? 'light' : 'dark')}
-            >
-              <span className="mobile-drawer-item-main">
-                {colorMode === 'dark' ? <SunOutlined className="mobile-drawer-item-icon" /> : <MoonOutlined className="mobile-drawer-item-icon" />}
-                {colorMode === 'dark' ? '切換為明亮模式' : '切換為暗黑模式'}
-              </span>
-            </Button>
-          </Tooltip>
-          <Tooltip title={textScale === 'normal' ? '切換為大字版' : textScale === 'large' ? '切換為超大字版' : '切換為標準字體'}>
-            <Button
-              block
-              type="text"
-              className="mobile-drawer-item"
-              onClick={cycleTextScale}
-            >
-              <span className="mobile-drawer-item-main">
-                <FontSizeOutlined className="mobile-drawer-item-icon" />
-                字體大小：{textScale === 'normal' ? '標準字' : textScale === 'large' ? '大字版' : '超大字'}
-              </span>
-            </Button>
-          </Tooltip>
-        </div>
-
-        {user ? (
-          <>
-            <div className="mobile-drawer-divider" />
-            <Button
-              block
-              type="text"
-              danger
-              className="mobile-drawer-item"
-              onClick={async () => {
-                await logout();
-                navigate('/');
-                setMobileMenuOpen(false);
-              }}
-            >
-              <span className="mobile-drawer-item-main">
-                <LogoutOutlined className="mobile-drawer-item-icon" />
-                登出
-              </span>
-            </Button>
-          </>
-        ) : null}
       </Drawer>
 
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} afterLoginNavigate={afterLoginNavigate} />

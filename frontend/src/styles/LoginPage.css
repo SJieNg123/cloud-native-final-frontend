@@ -2,15 +2,24 @@
   max-width: 760px;
 }
 
+.login-page > .ant-row {
+  margin-inline: 0 !important;
+}
+
+.login-page > .ant-row > .ant-col {
+  padding-inline: 0 !important;
+}
+
 .login-kicker {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
   padding: 4px 10px;
-  border-radius: 999px;
+  border: 1px solid var(--ds-line);
+  border-left: 3px solid var(--ds-red);
+  border-radius: var(--ds-radius-sm);
+  color: var(--ds-red);
+  background: var(--ds-surface-muted);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #c6421f;
-  background: #ffe9e2;
-  border: 1px solid #ffd2c5;
-  margin-bottom: 10px;
+  font-weight: 800;
 }

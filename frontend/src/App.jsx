@@ -45,9 +45,10 @@ const ProtectedRoute = ({ children, allowRoles }) => {
 
 const AppShell = () => {
   const location = useLocation();
+  const { user } = useAuth();
   const hideBackgroundMusic = location.pathname === '/verify';
   return (
-    <Layout className="app-layout">
+    <Layout className={`app-layout ${user ? 'app-layout-authenticated' : 'app-layout-guest'}`}>
       <Header />
       <Content className="main-content">
         <Suspense fallback={<FullscreenLoader />}>

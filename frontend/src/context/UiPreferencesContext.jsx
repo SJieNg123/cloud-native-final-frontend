@@ -33,6 +33,7 @@ export const UiPreferencesProvider = ({ children }) => {
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle('theme-dark', colorMode === 'dark');
+    root.classList.toggle('theme-light', colorMode !== 'dark');
     root.classList.toggle('text-large', textScale === 'large');
     root.classList.toggle('text-xlarge', textScale === 'xlarge');
   }, [colorMode, textScale]);
@@ -44,16 +45,37 @@ export const UiPreferencesProvider = ({ children }) => {
       theme: {
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#c8102e',
-          colorInfo: '#c8102e',
-          borderRadius: 12,
-          borderRadiusLG: 16,
+          colorPrimary: '#da291c',
+          colorInfo: '#da291c',
+          colorSuccess: '#03904a',
+          colorWarning: '#f13a2c',
+          colorError: '#da291c',
+          colorText: isDark ? '#ffffff' : '#181818',
+          colorTextSecondary: isDark ? '#b7b7b7' : '#666666',
+          colorBorder: isDark ? 'rgba(255, 255, 255, 0.16)' : '#d6d6d6',
+          colorBgLayout: isDark ? '#181818' : '#f4f4f4',
+          colorBgContainer: isDark ? '#242424' : '#ffffff',
+          colorBgElevated: isDark ? '#303030' : '#ffffff',
+          borderRadius: 4,
+          borderRadiusLG: 8,
           fontSize: baseFontSize,
-          boxShadowSecondary: isDark ? '0 16px 36px rgba(0, 0, 0, 0.45)' : '0 16px 36px rgba(35, 12, 16, 0.14)'
+          fontFamily: "'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif",
+          boxShadowSecondary: isDark ? '0 16px 36px rgba(0, 0, 0, 0.38)' : '0 16px 36px rgba(24, 24, 24, 0.12)'
         },
         components: {
-          Card: { borderRadiusLG: 16 },
-          Button: { controlHeight: textScale === 'xlarge' ? 52 : textScale === 'large' ? 44 : 40, borderRadius: 12 }
+          Card: {
+            borderRadiusLG: 8,
+            headerFontSize: baseFontSize + 1
+          },
+          Button: {
+            controlHeight: textScale === 'xlarge' ? 52 : textScale === 'large' ? 44 : 40,
+            borderRadius: 4,
+            fontWeight: 700
+          },
+          Input: { borderRadius: 4 },
+          Select: { borderRadius: 4 },
+          Modal: { borderRadiusLG: 8 },
+          Table: { borderRadiusLG: 8 }
         }
       }
     };
@@ -77,4 +99,3 @@ export const useUiPreferences = () => {
   }
   return ctx;
 };
-

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Empty, Input, Row, Skeleton, Space, Tag, Typography } from 'antd';
-import { CalendarOutlined, EnvironmentOutlined, TeamOutlined } from '@ant-design/icons';
+import { CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, TeamOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { apiClient } from '../api/client';
@@ -9,6 +9,80 @@ import { pickEventImage } from '../assets/media';
 import '../styles/EventsList.css';
 
 const { Title, Paragraph } = Typography;
+
+const EventCard = ({ event, primaryStatus, onOpen }) => {
+  const startDate = dayjs(event.starts_at);
+  const fallbackImage = pickEventImage(event.id || event.title);
+
+  return (
+    <Card
+      hoverable
+      className="event-card"
+      onClick={() => onOpen(event.id)}
+      cover={(
+        <img
+          className="event-cover"
+          src={event.cover_image_url || fallbackImage}
+          alt={event.title}
+          loading="lazy"
+          decoding="async"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = fallbackImage;
+          }}
+        />
+      )}
+    >
+      <div className="event-card-content">
+        <div className="event-header">
+          <h3>{event.title}</h3>
+          <Tag className="event-primary-status" color={primaryStatus.color}>
+            {primaryStatus.label}
+          </Tag>
+        </div>
+
+        <Paragraph className="event-description" ellipsis={{ rows: 2 }}>
+          開放廠區：{event.allowed_sites?.length ? event.allowed_sites.join(', ') : '全廠區'}
+        </Paragraph>
+
+        <div className="event-details">
+          <div className="detail-item">
+            <CalendarOutlined />
+            <span>{startDate.format('YYYY-MM-DD HH:mm')}</span>
+          </div>
+          <div className="detail-item">
+            <ClockCircleOutlined />
+            <span>活動結束：{event.ends_at ? dayjs(event.ends_at).format('YYYY-MM-DD HH:mm') : '未設定'}</span>
+          </div>
+          <div className="detail-item">
+            <ClockCircleOutlined />
+            <span>報名截止：{event.registration_closes_at ? dayjs(event.registration_closes_at).format('YYYY-MM-DD HH:mm') : '未設定'}</span>
+          </div>
+          <div className="detail-item">
+            <EnvironmentOutlined />
+            <span>{event.venue || '依場次公告'}</span>
+          </div>
+          <div className="detail-item">
+            <TeamOutlined />
+            <span>場次 {event.session_count}</span>
+          </div>
+        </div>
+
+        <div className="event-footer">
+          <span className="event-footer-note">
+            報名截止：{event.registration_closes_at ? dayjs(event.registration_closes_at).format('MM/DD HH:mm') : '未設定'}
+          </span>
+          <Button type="primary" onClick={(e) => {
+            e.stopPropagation();
+            onOpen(event.id);
+          }}>
+            查看詳情
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+};
 
 const EventsList = () => {
   const navigate = useNavigate();
@@ -109,20 +183,14 @@ const EventsList = () => {
     }
   };
 
-  const visibleEvents = events.filter((event) => {
-    const term = keyword.trim().toLowerCase();
-    if (!term) return true;
-    return `${event.title} ${event.venue || ''} ${(event.allowed_sites || []).join(' ')}`.toLowerCase().includes(term);
-  });
-
-  const canRegisterEvent = (event) => {
+  const canRegisterEvent = useCallback((event) => {
     const roleCanRegister = user?.role === 'EMPLOYEE';
     const isPublished = event.status === 'PUBLISHED';
     const isRegistrationOpen = Boolean(event.is_registration_open);
     return roleCanRegister && isPublished && isRegistrationOpen && Boolean(event.is_eligible);
-  };
+  }, [user?.role]);
 
-  const getPrimaryStatus = (event) => {
+  const getPrimaryStatus = useCallback((event) => {
     const isPublished = event.status === 'PUBLISHED';
     const isRegistrationOpen = Boolean(event.is_registration_open);
     if (event.status === 'CANCELLED') return { label: '已取消', color: 'red' };
@@ -131,9 +199,19 @@ const EventsList = () => {
     if (!isRegistrationOpen) return { label: '已截止/未開放', color: 'default' };
     if (!event.is_eligible) return { label: '不符合資格', color: 'default' };
     return { label: '可報名', color: 'success' };
-  };
+  }, [user?.role]);
 
-  const sortedVisibleEvents = [...visibleEvents].sort((a, b) => {
+  const visibleEvents = useMemo(() => {
+    const term = keyword.trim().toLowerCase();
+    if (!term) return events;
+    return events.filter((event) => (
+      `${event.title} ${event.venue || ''} ${(event.allowed_sites || []).join(' ')}`
+        .toLowerCase()
+        .includes(term)
+    ));
+  }, [events, keyword]);
+
+  const sortedVisibleEvents = useMemo(() => [...visibleEvents].sort((a, b) => {
     const aCanRegister = canRegisterEvent(a);
     const bCanRegister = canRegisterEvent(b);
     if (aCanRegister !== bCanRegister) {
@@ -146,78 +224,16 @@ const EventsList = () => {
     const bUpdated = dayjs(b.updated_at || b.updatedAt || 0).valueOf();
     if (aUpdated !== bUpdated) return bUpdated - aUpdated;
     return String(b.id || '').localeCompare(String(a.id || ''));
-  });
+  }), [canRegisterEvent, visibleEvents]);
 
-  const eligibleCount = events.filter((event) => canRegisterEvent(event)).length;
+  const eligibleCount = useMemo(
+    () => events.filter((event) => canRegisterEvent(event)).length,
+    [canRegisterEvent, events]
+  );
 
-  const EventCard = ({ event }) => {
-    const startDate = dayjs(event.starts_at);
-    const primaryStatus = getPrimaryStatus(event);
-
-    return (
-      <Card
-        hoverable
-        className="event-card"
-        onClick={() => navigate(`/events/${event.id}`)}
-        cover={(
-          <img
-            className="event-cover"
-            src={event.cover_image_url || pickEventImage(event.id || event.title)}
-            alt={event.title}
-            loading="lazy"
-            decoding="async"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = pickEventImage(event.id || event.title);
-            }}
-          />
-        )}
-      >
-        <div className="event-card-content">
-          <div className="event-header">
-            <h3>{event.title}</h3>
-            <Tag className="event-primary-status" color={primaryStatus.color}>
-              {primaryStatus.label}
-            </Tag>
-          </div>
-
-          <Paragraph className="event-description" ellipsis={{ rows: 2 }}>
-            開放廠區: {event.allowed_sites?.length ? event.allowed_sites.join(', ') : '全廠區'}
-          </Paragraph>
-
-          <div className="event-details">
-            <div className="detail-item">
-              <CalendarOutlined /> {startDate.format('YYYY-MM-DD HH:mm')}
-            </div>
-            <div className="detail-item">
-              🏁 活動結束：{event.ends_at ? dayjs(event.ends_at).format('YYYY-MM-DD HH:mm') : '未設定'}
-            </div>
-            <div className="detail-item">
-              ⏳ 報名截止：{event.registration_closes_at ? dayjs(event.registration_closes_at).format('YYYY-MM-DD HH:mm') : '未設定'}
-            </div>
-            <div className="detail-item">
-              <EnvironmentOutlined /> {event.venue || '依場次公告'}
-            </div>
-            <div className="detail-item">
-              <TeamOutlined /> 場次 {event.session_count}
-            </div>
-          </div>
-
-          <div className="event-footer">
-            <span className="event-footer-note">
-              報名截止：{event.registration_closes_at ? dayjs(event.registration_closes_at).format('MM/DD HH:mm') : '未設定'}
-            </span>
-            <Button type="primary" onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/events/${event.id}`);
-            }}>
-              查看詳情
-            </Button>
-          </div>
-        </div>
-      </Card>
-    );
-  };
+  const openEvent = useCallback((eventId) => {
+    navigate(`/events/${eventId}`);
+  }, [navigate]);
 
   return (
     <div className="events-list-container page-wrap">
@@ -226,7 +242,7 @@ const EventsList = () => {
           <Skeleton active paragraph={{ rows: 2 }} />
         </Card>
       ) : !user ? (
-        <Card className="events-hero hero-card">
+        <Card className="events-hero hero-card guest-hero">
           <Title level={2}>台積電晶彩活動通</Title>
           <Paragraph>
             請先點選右上角「登入」選擇身分後登入，即可瀏覽活動、報名、收即時通知與管理票券。
@@ -247,16 +263,16 @@ const EventsList = () => {
           </Space>
         </Card>
       ) : (
-      <Card className="events-hero hero-card">
-        <Title level={2}>探索精彩活動 ✨</Title>
-        <Paragraph>
-          公平抽籤、即時通知、行動裝置友善。現在就找到你想參加的場次，開啟你的活動旅程。
-        </Paragraph>
-        <div className="hero-stats">
-          <div><strong>{events.length}</strong><span>活動總數</span></div>
-          <div><strong>{eligibleCount}</strong><span>符合資格</span></div>
-        </div>
-      </Card>
+        <Card className="events-hero hero-card">
+          <Title level={2}>活動目錄</Title>
+          <Paragraph>
+            以公平抽籤、即時通知與電子票券串起員工活動流程。選擇合適場次後即可進入報名與票券狀態追蹤。
+          </Paragraph>
+          <div className="hero-stats">
+            <div><strong>{events.length}</strong><span>活動總數</span></div>
+            <div><strong>{eligibleCount}</strong><span>符合資格</span></div>
+          </div>
+        </Card>
       )}
 
       {!user ? null : (
@@ -294,7 +310,7 @@ const EventsList = () => {
             <Row gutter={[24, 24]}>
               {sortedVisibleEvents.map((event) => (
                 <Col key={event.id} xs={24} sm={12} md={8}>
-                  <EventCard event={event} />
+                  <EventCard event={event} primaryStatus={getPrimaryStatus(event)} onOpen={openEvent} />
                 </Col>
               ))}
             </Row>
