@@ -1,7 +1,7 @@
 const { defineConfig } = require('@playwright/test');
 
-const e2eApiBase = 'https://cets.alanh.uk/api/v1';
-const e2eWsBase = 'wss://cets.alanh.uk/ws';
+const e2eApiBase = process.env.E2E_API_BASE_URL || 'http://localhost:8080/api/v1';
+const e2eWsBase = process.env.E2E_WS_BASE_URL || 'ws://localhost:8080/ws';
 
 module.exports = defineConfig({
   testDir: './e2e',

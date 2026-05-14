@@ -43,10 +43,11 @@ npm install
 
 ```env
 VITE_API_BASE_URL=/api/v1
-VITE_DEFAULT_ROLE=EMPLOYEE
+VITE_DEV_PROXY_API_TARGET=http://localhost:8080
+VITE_DEV_PROXY_WS_TARGET=ws://localhost:8080
 ```
 
-如果要改後端位置，請調整 `vite.config.js` 內 `server.proxy` 的 `target`。
+如果要改後端位置，請調整 `.env.local` 內的 proxy target。
 
 ### 開發模式
 
@@ -101,7 +102,7 @@ frontend/
 
 ## 🔑 API 設定
 
-開發模式建議使用 Vite proxy：`VITE_API_BASE_URL=/api/v1`。目前 `vite.config.js` 會把 `/api` 代理到 `https://cets.alanh.uk`；若後端在本機，請把 proxy target 改成實際位址，例如 `http://localhost:8080`。
+開發模式建議使用 Vite proxy：`VITE_API_BASE_URL=/api/v1`。`vite.config.js` 會依 `VITE_DEV_PROXY_API_TARGET` / `VITE_DEV_PROXY_WS_TARGET` 代理 `/api` 與 `/ws`；若後端在本機，可設為 `http://localhost:8080` / `ws://localhost:8080`。
 
 ### 登入
 

@@ -12,14 +12,10 @@ const resolveDefaultApiBase = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     return normalizeApiBase(import.meta.env.VITE_API_BASE_URL);
   }
-  // 统一走公网，避免误连本机后端。
-  if (import.meta.env.DEV && typeof window !== 'undefined') {
-    return 'https://cets.alanh.uk/api/v1';
-  }
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/api/v1`;
   }
-  return 'https://cets.alanh.uk/api/v1';
+  return '/api/v1';
 };
 
 const resolveWsBase = (apiBaseUrl) => {
@@ -31,7 +27,7 @@ const resolveWsBase = (apiBaseUrl) => {
     const wsProtocol = api.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${wsProtocol}//${api.host}/ws`;
   } catch {
-    return 'wss://cets.alanh.uk/ws';
+    return '/ws';
   }
 };
 
@@ -370,21 +366,9 @@ class APIClient {
     return this.client.post(`/admin/events/${eventId}/publish`);
   }
 
-  /**
-   * 手動抽籤主路徑與 lottery-runner 使用同一套後端邏輯。
-   * 可選：VITE_ADMIN_LOTTERY_POST_URL=https://host/api/v1/path/{sessionId}?e={eventId}
-   */
+  /** 手動抽籤主路徑與 lottery-runner 使用同一套後端邏輯。 */
   async adminRunLottery(eventId, sessionId) {
-    const tmpl = String(import.meta.env.VITE_ADMIN_LOTTERY_POST_URL || '').trim();
-    const fromEnv = tmpl
-      ? tmpl
-          .replaceAll('{eventId}', eventId)
-          .replaceAll('{sessionId}', sessionId)
-          .replaceAll('{EVENT_ID}', eventId)
-          .replaceAll('{SESSION_ID}', sessionId)
-      : '';
-    /** 相對路徑會接 baseURL；若為 https://… 開頭則視為絕對 URL */
-    const relativeOrAbsolute = [...(fromEnv ? [fromEnv] : []),
+    const relativeOrAbsolute = [
       `/admin/sessions/${sessionId}/run-lottery`,
       `/admin/events/${eventId}/sessions/${sessionId}/lottery`,
       `/admin/sessions/${sessionId}/lottery`
@@ -418,7 +402,7 @@ class APIClient {
       error: {
         code: 'LOTTERY_ENDPOINT_NOT_REGISTERED',
         message:
-          `抽籤失敗：伺服器不存在已嘗試的抽籤端點（皆 404），已試：${tried}。請確認後端是否部署 POST /admin/sessions/{session_id}/run-lottery，或於 .env 設定 VITE_ADMIN_LOTTERY_POST_URL 指向正確網址。`
+          `抽籤失敗：伺服器不存在已嘗試的抽籤端點（皆 404），已試：${tried}。請確認後端是否部署 POST /admin/sessions/{session_id}/run-lottery。`
       },
       detail: typeof lastErr?.detail === 'string' ? lastErr.detail : undefined
     };

@@ -1678,11 +1678,10 @@ const AdminConsolePage = () => {
                     message="後端／瀏覽器除錯重點"
                     description={
                       <span>
-                        已用 <code>GET https://cets.alanh.uk/api/openapi.json</code> 比對：目前部署規格書列出
+                        已用目前 API base 的 <code>openapi.json</code> 比對：目前部署規格書列出
                         <strong><code>POST /admin/sessions/{'{session_id}'}/run-lottery</code></strong> 作為管理員手動抽籤路徑，
                         與後端 <strong>lottery-runner／排程</strong> 使用同一套邏輯。前端會優先呼叫此路徑，若後端環境仍是舊版，
                         才會依序 fallback 到舊的 <code>/admin/events/…/sessions/…/lottery</code> 與 <code>/admin/sessions/…/lottery</code>。
-                        若測試環境路徑不同，請在 <code>.env</code> 設定 <code>VITE_ADMIN_LOTTERY_POST_URL</code>。
                       </span>
                     }
                   />
